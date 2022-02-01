@@ -1,0 +1,6 @@
+
+So we will connect RCC_MCO_1 to the input clock of the camera. The camera has no explicits
+max clock rate, however I believe that when it sends data back, the rate is based on what
+we provide. The STM32F207 only supports up to 54Mhz. However because we use the master clock
+output, we can configure and play with the exact rate so that it works best by
+programming the MCU. 
