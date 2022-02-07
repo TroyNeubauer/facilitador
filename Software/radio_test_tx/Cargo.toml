@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [profile.release]
-debug = 2
+debug = 0
 opt-level = 'z'
 lto = "fat"
 
@@ -12,7 +12,7 @@ lto = "fat"
 nrf24-rs = "0.1.1"
 cortex-m = { version = "0.7.4" }
 panic-halt = { version = "0.2" }
-stm32f4xx-hal = { version = "0.11", features = ["rt", "stm32f401"] }
+stm32f1xx-hal = { version = "0.8", features = ["rt", "stm32f103"] }
 cortex-m-rt = { version = "0.7" }
 cortex-m-semihosting = { version = "0.3.7" }
 embedded-hal = { version = "0.2" }
