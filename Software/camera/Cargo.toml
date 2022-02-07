@@ -1,0 +1,17 @@
+[package]
+name = "radio_test"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+debug = 2
+opt-level = 'z'
+lto = "fat"
+
+[dependencies]
+cortex-m = { version = "0.7.4" }
+panic-halt = { version = "0.2" }
+stm32f4xx-hal = { version = "0.11", features = ["rt", "stm32f407"] }
+cortex-m-rt = { version = "0.7" }
+cortex-m-semihosting = { version = "0.3.7" }
+embedded-hal = { version = "0.2" }
