@@ -2,10 +2,35 @@
 #![no_main]
 #![feature(bench_black_box)]
 
+use core::panic::PanicInfo;
 use cortex_m_rt::entry;
-use hal::{prelude::*, gpio::Edge};
-use panic_halt as _;
+use hal::{
+    device::gpioa::CRH,
+    gpio::{Output, Pin, PushPull},
+    prelude::*,
+};
 use stm32f1xx_hal as hal;
+
+static mut PANIC_LED: *mut Pin<Output<PushPull>, CRH, 'C', 13> = core::ptr::null_mut();
+
+#[panic_handler]
+fn panic_handler(_: &PanicInfo) -> ! {
+    // We assume that `PANIC_LED` has been set
+    let led = unsafe { PANIC_LED };
+    if led.is_null() {
+        loop {}
+    } else {
+        // SAFETY: led is non null, so it must have been initialized
+        let led = unsafe { &mut *PANIC_LED };
+        loop {
+            for _ in 0..1000 {
+                cortex_m::asm::delay(70_200_000);
+                // 72_000_000 / 7_200_000 ~= 10Hz
+            }
+            led.toggle();
+        }
+    }
+}
 
 #[entry]
 fn main() -> ! {
@@ -21,9 +46,19 @@ fn main() -> ! {
         .sysclk(72.mhz())
         .hclk(72.mhz())
         .freeze(&mut flash.acr);
-    
+
     // Initialize the different pins
     let mut gpioa = dp.GPIOA.split();
+    let mut gpioc = dp.GPIOC.split();
+
+    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+
+    // So so unsafe. I'm not gonna try to make a safety argument here because so many things are wrong
+    // This works on the current compiler to allow us to easily control the LED from the panic
+    // handler
+    let led_ptr: *mut Pin<Output<PushPull>, CRH, 'C', 13> =
+        unsafe { core::mem::transmute(&mut led) };
+    unsafe { PANIC_LED = led_ptr };
 
     let cs = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
     //let mut data_int = gpiob.pb3.into_pull_up_input();
@@ -75,5 +110,8 @@ fn main() -> ! {
     }
 
     // Message should now successfully have been sent!
-    loop {}
+    loop {
+        delay.delay_ms(1000u16);
+        led.toggle();
+    }
 }

@@ -4,14 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [profile.release]
-debug = 0
+debug = 2
 opt-level = 'z'
 lto = "fat"
 
 [dependencies]
 nrf24-rs = "0.1.1"
 cortex-m = { version = "0.7.4" }
-panic-halt = { version = "0.2" }
 stm32f1xx-hal = { version = "0.8", features = ["rt", "stm32f103"] }
 cortex-m-rt = { version = "0.7" }
 cortex-m-semihosting = { version = "0.3.7" }
