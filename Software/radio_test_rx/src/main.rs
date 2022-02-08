@@ -2,55 +2,87 @@
 #![no_main]
 #![feature(bench_black_box)]
 
+use core::panic::PanicInfo;
 use cortex_m_rt::entry;
-use hal::{prelude::*, gpio::Edge};
-use panic_halt as _;
-use stm32f4xx_hal as hal;
+use hal::{
+    device::gpioa::CRH,
+    gpio::{Output, Pin, PushPull},
+    prelude::*,
+};
+use stm32f1xx_hal as hal;
+
+static mut PANIC_LED: *mut Pin<Output<PushPull>, CRH, 'C', 13> = core::ptr::null_mut();
+
+#[panic_handler]
+fn panic_handler(_: &PanicInfo) -> ! {
+    // We assume that `PANIC_LED` has been set
+    let led = unsafe { PANIC_LED };
+    if led.is_null() {
+        loop {}
+    } else {
+        // SAFETY: led is non null, so it must have been initialized
+        let led = unsafe { &mut *PANIC_LED };
+        loop {
+            for _ in 0..1000 {
+                cortex_m::asm::delay(70_200_000);
+                // 72_000_000 / 7_200_000 ~= 10Hz
+            }
+            led.toggle();
+        }
+    }
+}
 
 #[entry]
 fn main() -> ! {
-    let mut device = hal::pac::Peripherals::take().unwrap();
+    let dp = hal::pac::Peripherals::take().unwrap();
     let core = cortex_m::Peripherals::take().unwrap();
+    let mut flash = dp.FLASH.constrain();
+    let mut afio = dp.AFIO.constrain();
 
-    let rcc = device.RCC.constrain();
+    let rcc = dp.RCC.constrain();
     let clocks = rcc
         .cfgr
-        .use_hse(26.mhz())
-        .require_pll48clk()
-        .sysclk(84.mhz())
-        .hclk(84.mhz())
-        .pclk1(21.mhz())
-        .pclk2(42.mhz())
-        .freeze();
-    
-    let mut syscfg = device.SYSCFG.constrain();
+        .use_hse(8.mhz())
+        .sysclk(72.mhz())
+        .hclk(72.mhz())
+        .freeze(&mut flash.acr);
 
     // Initialize the different pins
-    let gpioc = device.GPIOC.split();
-    let gpiod = device.GPIOD.split();
-    let gpiob = device.GPIOB.split();
+    let mut gpioa = dp.GPIOA.split();
+    let mut gpioc = dp.GPIOC.split();
 
-    let cs = gpiod.pd2.into_push_pull_output();
-    let mut data_int = gpiob.pb3.into_pull_up_input();
-    data_int.make_interrupt_source(&mut syscfg);
-    data_int.enable_interrupt(&mut device.EXTI);
-    data_int.trigger_on_edge(&mut device.EXTI, Edge::Falling);
+    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+    led.set_high();
 
-    let ce = gpiod.pd3.into_push_pull_output();
+    // So so unsafe. I'm not gonna try to make a safety argument here because so many things are wrong
+    // This works on the current compiler to allow us to easily control the LED from the panic
+    // handler
+    let led_ptr: *mut Pin<Output<PushPull>, CRH, 'C', 13> =
+        unsafe { core::mem::transmute(&mut led) };
+    unsafe { PANIC_LED = led_ptr };
 
-    let mosi = gpioc.pc12.into_alternate();
-    let miso = gpioc.pc11.into_alternate();
-    let sclk = gpioc.pc10.into_alternate();
+    let cs = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
+    //let mut data_int = gpiob.pb3.into_pull_up_input();
+    //data_int.make_interrupt_source(&mut syscfg);
+    //data_int.enable_interrupt(&mut device.EXTI);
+    //data_int.trigger_on_edge(&mut device.EXTI, Edge::Falling);
 
-    let spi = hal::spi::Spi::new(
-        device.SPI3,
+    let ce = gpioa.pa3.into_push_pull_output(&mut gpioa.crl);
+
+    let mosi = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
+    let miso = gpioa.pa6;
+    let sclk = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
+
+    let spi = hal::spi::Spi::spi1(
+        dp.SPI1,
         (sclk, miso, mosi),
+        &mut afio.mapr,
         nrf24_rs::SPI_MODE,
         1.mhz(),
-        &clocks,
+        clocks,
     );
 
-    let mut delay = hal::delay::Delay::new(core.SYST, &clocks);
+    let mut delay = hal::delay::Delay::new(core.SYST, clocks);
 
     // Setup some configuration values
     let config = nrf24_rs::config::NrfConfig::default()
@@ -73,12 +105,18 @@ fn main() -> ! {
     nrf_chip.start_listening().unwrap();
 
     loop {
+
         while !nrf_chip.data_available().unwrap() {
+            // No data availble, wait 50ms, then check again
             delay.delay_ms(50u16);
         }
+        led.toggle();
+        // Now there is some data availble to read
+
+        // Initialize empty buffer
         let mut buffer = [0u8; nrf24_rs::MAX_PAYLOAD_SIZE as usize];
         nrf_chip.read(&mut buffer).unwrap();
-
-        loop {}
+        delay.delay_ms(125u16);
+        led.toggle();
     }
 }
