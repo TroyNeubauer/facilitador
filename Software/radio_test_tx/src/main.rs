@@ -90,7 +90,7 @@ fn main() -> ! {
     // Setup some configuration values
     let config = nrf24_rs::config::NrfConfig::default()
         .channel(8)
-        .pa_level(nrf24_rs::config::PALevel::Min)
+        .pa_level(nrf24_rs::config::PALevel::Max)
         // We will use a payload size the size of our message
         .payload_size(nrf24_rs::MAX_PAYLOAD_SIZE);
 
@@ -104,8 +104,6 @@ fn main() -> ! {
     // The listener will have to open a reading pipe with the same address
     // in order to receive this message.
     nrf_chip.open_writing_pipe(b"Node1").unwrap();
-
-    nrf_chip.start_writing();
 
     // Message should now successfully have been sent!
     loop {

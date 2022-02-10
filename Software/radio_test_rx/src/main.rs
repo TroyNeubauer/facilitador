@@ -87,7 +87,7 @@ fn main() -> ! {
     // Setup some configuration values
     let config = nrf24_rs::config::NrfConfig::default()
         .channel(8)
-        .pa_level(nrf24_rs::config::PALevel::Min)
+        .pa_level(nrf24_rs::config::PALevel::Max)
         // We will use a payload size the size of our message
         .payload_size(nrf24_rs::MAX_PAYLOAD_SIZE);
 
@@ -105,7 +105,6 @@ fn main() -> ! {
     nrf_chip.start_listening().unwrap();
 
     loop {
-
         while !nrf_chip.data_available().unwrap() {
             // No data availble, wait 50ms, then check again
             delay.delay_ms(50u16);
