@@ -1,5 +1,6 @@
-use core::{mem::size_of, slice};
+use core::mem::size_of;
 
+/// Represents an `N` byte key, aligned to 4 byte boundaries
 #[repr(C, align(4))]
 pub struct Key<const N: usize>([u8; N]);
 
@@ -12,10 +13,6 @@ pub const SUB_KEY_BYTES: usize = 32;
 /// The number of 32 bit elements in a normal subkey
 pub const SUB_KEY_ELEMENTS: usize = SUB_KEY_BYTES / size_of::<u32>();
 
-/// The number of bytes used to store the index at the beginning of the packet.
-/// The high bit of the index is always 0. 1 is reserved for future protocol expansion
-pub const INDEX_BYTES: usize = 2;
-
 impl<const N: usize> Key<N> {
     /// Creates a new key.
     ///
@@ -27,6 +24,7 @@ impl<const N: usize> Key<N> {
     }
 
     /// Returns a slice len `key_len` of this key based on word offset module the key length
+    /// `L` is the number of 32 bit elements returned
     pub fn subkey<const L: usize>(&self, word_offset: usize) -> &[u32; L] {
         // Dividing by the size of a u32 rounds truncates the remainder, so a 32 bit slice of self.0
         // has at most `len` elements
@@ -42,19 +40,20 @@ impl<const N: usize> Key<N> {
         // SAFETY:
         // Self is aligned to a 4 byte boundaries, so self.0 is aligned, so the resulting pointer is aligned
         let ptr: *const u32 = self.0.as_ptr() as *const u32;
+
         // SAFETY:
         // 1. Offset is in range by the calculation of `max_index` above
-        // 2. At least `key_len` elements are readable by the `max_index` calculation
+        // 2. At least `L` elements are readable by the `max_index` calculation
         // 3. The result is aligned because `word_slice` is aligned
         // 4. The lifetime of the result is 'k because `word_slice` is 'k
-        let subkey_start = unsafe { ptr.add(offset) }; 
+        let subkey_start = unsafe { ptr.add(offset) };
 
         // SAFETY:
         // 1. The layout of a array type ([T; N]) has the same alignment requirements of T, and has
         //    the size of size_of::<T>() * N
         // 2. The lifetime of `self.0` is 'self, so the lifetime elision knows that the returned
         //    lifetime is 'self
-        // 
+        //
         // See: https://doc.rust-lang.org/reference/type-layout.html#array-layout
         unsafe { &*(subkey_start as *const [u32; L]) }
     }
@@ -99,8 +98,10 @@ mod tests {
             // mod 20 because of 5 possible alignments we can have, 5 * 4 == 12
             let b = (i * 4 % 20) as u8 + 12;
             let expected = [b, b + 1, b + 2, b + 3];
-            println!("i {}, b {}, subkey {:?}, expected {:?}", i, b, expected, subkey[3].to_ne_bytes());
             assert_eq!(subkey[3], u32::from_ne_bytes(expected));
         }
+        //Make sure this works for zero sized types
+        let zst = key.subkey::<0>(0);
+        assert!(zst.is_empty());
     }
 }
