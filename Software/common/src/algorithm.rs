@@ -1,14 +1,13 @@
-
+use crate::key::Key;
 use core::marker::PhantomData;
-use core::ops::Deref;
-
-//use crate::Key;
+use core::mem::size_of;
+use core::ops::{Deref, BitXorAssign};
 
 pub trait Index: core::ops::BitXor<Output = Self> + Sized + Copy {
     fn to_usize(self) -> usize;
 }
 
-#[repr(C, align(4))]
+#[repr(C, align(8))]
 pub struct GenericCipherBlock<const N: usize>(pub [u8; N]);
 
 impl<const N: usize> GenericCipherBlock<N> {
@@ -17,7 +16,7 @@ impl<const N: usize> GenericCipherBlock<N> {
     }
 }
 
-pub type CipherBlock = GenericCipherBlock<crate::SUB_KEY_BYTES>;
+pub type CipherBlock = GenericCipherBlock<32>;
 
 impl<const N: usize> Deref for GenericCipherBlock<N> {
     type Target = [u8];
@@ -26,29 +25,35 @@ impl<const N: usize> Deref for GenericCipherBlock<N> {
         &self.0
     }
 }
+
 impl<const N: usize> AsRef<[u8]> for GenericCipherBlock<N> {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
-struct GenericCipher<Hash, IndexTy, const KEY_SIZE: usize, const BLOCK_SIZE: usize>
+pub trait Element: Copy + Default + BitXorAssign {
+}
+
+struct GenericCipher<'k, Hash, IndexTy, Elem, const KEY_ELEMENTS: usize, const BLOCK_BYTES: usize>
 where
     Hash: Fn(IndexTy) -> IndexTy,
     IndexTy: Index,
+    Elem: Element
 {
     //hash: Hash,
     hash: Hash,
-    key: Key<KEY_SIZE>,
+    key: &'k Key<Elem, KEY_ELEMENTS>,
     index_key: IndexTy,
     _index: PhantomData<IndexTy>,
 }
 
-impl<'k, Hash, IndexTy, const KEY_SIZE: usize, const BLOCK_SIZE: usize>
-    GenericCipher<Hash, IndexTy, KEY_SIZE, BLOCK_SIZE>
+impl<'k, Hash, IndexTy, Elem, const KEY_ELEMENTS: usize, const BLOCK_BYTES: usize>
+    GenericCipher<'k, Hash, IndexTy, Elem, KEY_ELEMENTS, BLOCK_BYTES>
 where
     Hash: Fn(IndexTy) -> IndexTy,
     IndexTy: Index,
+    Elem: Element
 {
     /// Performs encryption or decryption of a single block.
     /// `L` determines many elements the u32 subkey has. Because N is in bytes, `L` should always
@@ -65,15 +70,15 @@ where
     pub fn cipher_block<const L: usize>(
         &self,
         index: IndexTy,
-        block: &mut GenericCipherBlock<BLOCK_SIZE>,
+        block: &mut GenericCipherBlock<BLOCK_BYTES>,
     ) -> Result<(), ()> {
-        if KEY_SIZE / size_of::<u32>() != L {
+        if BLOCK_BYTES / size_of::<u32>() != L {
             // User choose wrong L for N
             panic!(
-                "Wrong L ({}), for N ({}). Expected L to be {}",
+                "Wrong L ({}), for block bytes {}. Expected L to be {}",
                 L,
-                KEY_SIZE,
-                KEY_SIZE / size_of::<u32>()
+                BLOCK_BYTES,
+                BLOCK_BYTES / size_of::<u32>()
             );
         }
 
@@ -85,7 +90,7 @@ where
         let key = self.key.subkey::<L>(index);
 
         // SAFETY: u8 is safe to transmute to u32. There are no invalid bit patterns
-        let (before, buf, after) = unsafe { block.0.align_to_mut::<u32>() };
+        let (before, buf, after) = unsafe { block.0.align_to_mut::<Elem>() };
 
         // These lengths are guaranteed to be 0 because `CipherBlock` has explicit 4 byte alignment
         debug_assert!(before.is_empty());
@@ -99,28 +104,22 @@ where
     }
 }
 
-/*
-struct GenericCipher<'k, Hash, const N: usize, IndexSrc, IndexDst, T>
-where
-    Hash: Fn(IndexSrc) -> IndexDst,
-    IndexSrc: byte_slice_cast::AsByteSlice<T>,
-    IndexDst: std::ops::BitXor<Output = usize>,
-{
-*/
-
-fn identity(index: u32) -> u32 {
+fn identity_hash(index: u32) -> u32 {
     index
 }
 
-struct MainCipher<Hash, const KEY_SIZE: usize>(GenericCipher<Hash, u32, KEY_SIZE, SUB_KEY_BYTES>)
+pub struct MainCipher<'k, Hash, const KEY_SIZE: usize>(
+    GenericCipher<'k, Hash, u32, u32, KEY_SIZE, 32>,
+)
+
 where
     Hash: Fn(u32) -> u32;
 
-impl<'k, const KEY_SIZE: usize> MainCipher<fn(u32) -> u32, KEY_SIZE> {
-    pub fn new(key: [u8; KEY_SIZE], index_key: u32) -> Self {
+impl<'k, const KEY_SIZE: usize> MainCipher<'k, fn(u32) -> u32, KEY_SIZE> {
+    pub fn new(key: &'k Key<u32, KEY_SIZE>, index_key: u32) -> Self {
         Self(GenericCipher {
-            hash: identity,
-            key: Key(key),
+            hash: identity_hash,
+            key,
             index_key,
             _index: Default::default(),
         })
@@ -129,7 +128,7 @@ impl<'k, const KEY_SIZE: usize> MainCipher<fn(u32) -> u32, KEY_SIZE> {
     /// Encrypts or decrypts a single block using `key` and `index`.
     /// Because Xor is used, the encryption and decryption operation is the same
     pub fn cipher_block(&self, index: u32, block: &mut GenericCipherBlock<32>) -> Result<(), ()> {
-        self.0.cipher_block::<SUB_KEY_ELEMENTS>(index, block)
+        self.0.cipher_block::<8>(index, block)
     }
 }
 
@@ -143,15 +142,17 @@ impl Index for u32 {
     }
 }
 
+impl Element for u32 {}
+
 #[cfg(test)]
-mod tests2 {
+mod tests {
     use super::*;
-    use rand::RngCore;
+    use rand::{RngCore, SeedableRng};
 
     #[test]
     fn encrypt_and_decrypt() {
-        for i in 0..512 {
-            let mut rng = rand::thread_rng();
+        for i in 0..10 {
+            let mut rng = rand::rngs::StdRng::seed_from_u64(i);
 
             let mut block_bytes = [0u8; 32];
             rng.fill_bytes(&mut block_bytes);
@@ -159,22 +160,22 @@ mod tests2 {
 
             let mut key_bytes = [0u8; 32];
             rng.fill_bytes(&mut key_bytes);
+            let key = Key::new(key_bytes);
 
             let mut index_key = [0u8; 4];
             rng.fill_bytes(&mut index_key);
             let index_key = u32::from_ne_bytes(index_key);
 
             let mut block = CipherBlock::new(block_bytes);
-            let cipher = MainCipher::new(key_bytes, index_key);
-            println!("{:?}", block.as_ref());
+            let cipher = MainCipher::new(&key, index_key);
 
-            cipher.cipher_block(i, &mut block).unwrap();
-            println!("{:?}", block.as_ref());
-            cipher.cipher_block(i, &mut block).unwrap();
+            //let index = rng.gen();
+            let index = i as u32;
+            cipher.cipher_block(index, &mut block).unwrap();
+            cipher.cipher_block(index, &mut block).unwrap();
             assert_eq!(block.as_ref(), original_block.as_ref());
-
-            println!("{:?}", block.as_ref());
         }
+
+        crate::print_freq();
     }
 }
-
