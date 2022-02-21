@@ -1,21 +1,30 @@
+use core::mem::size_of;
 #[cfg(feature = "std")]
 use lazy_static::lazy_static;
 #[cfg(feature = "std")]
 use std::{collections::HashMap, sync::Mutex};
 
-/// Represents an `N` element key of type `T`
-pub struct Key<T, const N: usize>([T; N])
-where
-    T: Copy + Default;
+/// A type that is safe to use as a word in a block or key
+///
+/// # Safety
+/// 1. All bit patterns of implementing types must be valid
+/// 2. Implementing types must require alignment less than or equal to 8 bytes
+pub unsafe trait Word: Copy + From<u8> {}
+
+/// Represents an `N` element key of type `T`.
+/// Used so that larger element sizes such as u32 or u64 can be used, increasing effiency over u8
+#[repr(align(8))]
+pub struct Key<const N: usize>([u8; N]);
 
 /// The symmetric key used for both encryption and decryption
-pub const KEY: Key<u32, 53280> = Key::new(include_bytes!("../../private/key.bin"));
+pub const KEY: Key<53280> = Key::new(*include_bytes!("../../private/key.bin"));
 
 #[cfg(feature = "std")]
 lazy_static! {
     static ref FREQ: Mutex<HashMap<usize, usize>> = Mutex::new(HashMap::new());
 }
 
+#[cfg(test)]
 pub fn print_freq() {
     let lock = FREQ.lock().unwrap();
     for (k, v) in lock.iter() {
@@ -23,48 +32,43 @@ pub fn print_freq() {
     }
 }
 
-impl<T, const N: usize> Key<T, N>
-where
-    T: Copy + Default,
-{
-    /// Creates a new key.
+impl<const N: usize> Key<N> {
+    /// Creates a new key by copying the data from `key` into self
     ///
     /// # Panics
     ///
-    /// If `key.len()` is not a multiple of four
-    pub fn new(key: &[u8]) -> Self {
-        let elements = [T::default(); N];
-        Self(elements)
-    }
-
-    pub fn new_with_elements(key: [T; N]) -> Self {
+    /// If `key.len()` is not a multiple of `size_of::<T>()`
+    pub const fn new(key: [u8; N]) -> Self {
         Self(key)
     }
 
     /// Returns a slice len `key_len` of this key based on word offset module the key length
-    /// `L` is the number of 32 bit elements returned
-    pub fn subkey<const L: usize>(&self, word_offset: usize) -> &[T; L] {
-        if L > N {
+    /// `L` is the number of elements returned
+    pub fn subkey<T: Word, const L: usize>(&self, word_offset: usize) -> &[T; L] {
+        let key_elements = N / size_of::<T>();
+        if L > key_elements {
             panic!(
-                "Subkey larger than main key! Main key elements: {}, requested elements: {}",
-                N, L
+                "Subkey larger than main key! Main key bytes: {}, requested bytes: {} ({} elements)",
+                N, L * size_of::<T>(), L
             );
         }
 
         // We need to find `L` contiguous elements, so the maximum index (exclusive) is `L`
         // less than the total length of the key
-        let max_index = (N + 1) - L;
+        let max_index = (key_elements + 1) - L;
 
         // Ensure offset is in range
         let offset = word_offset % max_index;
 
         // SAFETY:
-        // Self is aligned to a 4 byte boundaries, so self.0 is aligned, so the resulting pointer is aligned
+        // T is only imelemented for types with an alignment of 8 bytes or less,
+        // becasue Self is aligned to 8 byte bounderies via #[reper(align(8))], the resulting
+        // pointer is aligned
         let ptr: *const T = self.0.as_ptr() as *const T;
 
         #[cfg(feature = "std")]
         {
-            dbg!(L, N, max_index, offset, max_index);
+            dbg!(L, key_elements, max_index, offset, max_index);
             let mut lock = FREQ.lock().unwrap();
             let count = lock.entry(offset).or_insert_with(|| 0);
             *count += 1;
@@ -100,24 +104,29 @@ mod tests {
         // it sees that its value is `2^15*(1+5/8)` which should reduce the modulus to bitwise
         // instructions (please compiler)
         assert_eq!(KEY.0.len(), 53280);
-        assert_eq!(KEY.0.len() - KEY.0.len(), 2usize.pow(15) * 13 / 8);
+        assert_eq!(KEY.0.len() - 32, 2usize.pow(15) * 13 / 8);
     }
 
     #[test]
     fn subkey() {
         const KEY_LEN: usize = 32;
-        let key = (0..KEY_LEN).collect();
+        let key: [u8; KEY_LEN] = (0u8..KEY_LEN as u8)
+            .into_iter()
+            .collect::<Vec<_>>()
+            .as_slice()
+            .try_into()
+            .unwrap();
 
-        let key = Key::new_with_elements(key);
+        let key = Key::new(key);
         for i in 0..32 {
-            let subkey = key.subkey::<1>(i);
+            let subkey = key.subkey::<u32, 1>(i);
             let b = (i * 4 % KEY_LEN) as u8;
             let expected = [b, b + 1, b + 2, b + 3];
             assert_eq!(subkey[0], u32::from_ne_bytes(expected));
         }
 
         for i in 0..32 {
-            let subkey = key.subkey::<4>(i);
+            let subkey = key.subkey::<u32, 4>(i);
             // The numbers are a bit strange here because when getting a 16 byte subkey from a 32
             // byte key, there are only 5 positions we can go to to get a unique key. We always
             // check the last 32 bit word of the subkey, so we need to add 12 because 3 * 4. We do
@@ -127,7 +136,16 @@ mod tests {
             assert_eq!(subkey[3], u32::from_ne_bytes(expected));
         }
         //Make sure this works for zero sized types
-        let zst = key.subkey::<0>(0);
+        let zst = key.subkey::<u32, 0>(0);
         assert!(zst.is_empty());
     }
 }
+
+/// SAFETY: u8 has no invalid bit patterns
+unsafe impl Word for u8 {}
+/// SAFETY: u16 has no invalid bit patterns
+unsafe impl Word for u16 {}
+/// SAFETY: u32 has no invalid bit patterns
+unsafe impl Word for u32 {}
+/// SAFETY: u64 has no invalid bit patterns
+unsafe impl Word for u64 {}

@@ -1,26 +1,43 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 #![cfg_attr(not(feature = "std"), no_std)]
+//! aaaa
+//!
+//! ```
+//! use common::{Key, CipherBlock, MainCipher};
+//! use rand::{RngCore, SeedableRng};
+//!
+//! // Use a more secure seeding algorithm!
+//! let mut rng = rand::rngs::StdRng::seed_from_u64(0xDEADBEEF);
+//!
+//! // Encryption is done in place so this is where the plaintext goes
+//! let mut block_bytes = [0u8; 32];
+//! rng.fill_bytes(&mut block_bytes);
+//! let original_block = Clone::clone(&block_bytes);
+//! 
+//! // Generate our encryption key
+//! let mut key_bytes = [0u8; 64];
+//! rng.fill_bytes(&mut key_bytes);
+//! let key = Key::new(key_bytes);
+//! 
+//! // We also need an index key that is used to encrypt the index when sent in the clear
+//! let mut index_key = [0u8; 4];
+//! rng.fill_bytes(&mut index_key);
+//! let index_key = u32::from_ne_bytes(index_key);
+//! 
+//! // Create our block and cipher
+//! let mut block = CipherBlock::new(block_bytes);
+//! let cipher = MainCipher::new(&key, index_key);
+//! 
+//! // Each message block is encrypted with a different index that determines which part of the key
+//! // is Xored with the plaintext. This should change for every message. Incrementing is fine
+//! let index = 16460;
+//! cipher.cipher_block(index, &mut block);
+//! cipher.cipher_block(index, &mut block);
+//! assert_eq!(block.as_ref(), original_block.as_ref());
+//! ```
 
 mod key;
-pub use key::*;
+pub use key::{Word, KEY, Key};
 
 mod algorithm;
-use algorithm::*;
-
-fn main() {
-    use std::io::{Read, Write};
-
-    let mut block_bytes = [0u8; 32];
-    std::io::stdin().read_exact(&mut block_bytes).unwrap();
-    let mut key_bytes = [0u8; 1024];
-    std::io::stdin().read_exact(&mut key_bytes).unwrap();
-    let key = Key::new(key_bytes);
-    let mut index_key = [0u8; 4];
-    std::io::stdin().read_exact(&mut index_key).unwrap();
-    let index_key = u32::from_ne_bytes(index_key);
-
-    let mut block = CipherBlock::new(block_bytes);
-    let cipher = MainCipher::new(&key, index_key);
-    cipher.cipher_block(0, &mut block).unwrap();
-    std::io::stdout().write_all(&block).unwrap();
-}
+pub use algorithm::{CipherBlock, Element, GenericCipherBlock, Index, MainCipher};
