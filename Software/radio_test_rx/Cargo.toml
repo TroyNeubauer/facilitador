@@ -15,3 +15,6 @@ stm32f1xx-hal = { version = "0.8", features = ["rt", "stm32f103"] }
 cortex-m-rt = { version = "0.7" }
 cortex-m-semihosting = { version = "0.3.7" }
 embedded-hal = { version = "0.2" }
+common = { path = "../common/", default-features = false }
+usb-device = "0.2.8"
+usbd-serial = "0.1.1"

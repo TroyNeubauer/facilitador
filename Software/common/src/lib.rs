@@ -43,4 +43,4 @@ mod algorithm;
 pub use algorithm::{GenericCipher, GenericCipherBlock, Index};
 
 mod alg1;
-pub use alg1::{CipherBlock, MainCipher, IndexedBlock};
+pub use alg1::{CipherBlock, MainCipher, IndexedBlock, Tag, Tag31_1};

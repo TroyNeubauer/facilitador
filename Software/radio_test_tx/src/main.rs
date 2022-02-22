@@ -83,28 +83,20 @@ fn main() -> ! {
     );
 
     let mut delay = hal::delay::Delay::new(core.SYST, clocks);
-    let a = common::KEY;
 
     let message = b"Hello world! I need to fill all the bytes please!"; // The message we will be sending
     let message = &message[..nrf24_rs::MAX_PAYLOAD_SIZE as usize];
 
 
-    use common::{Key, CipherBlock, MainCipher, KEY};
+    use common::{IndexedBlock, MainCipher, KEY, Tag};
 
-
-    // Encryption is done in place so this is where the plaintext goes
-    let mut block_bytes = [0u8; 32];
-     
     // We also need an index key that is used to encrypt the index when sent in the clear
-    let mut index_key: [u8; 4] = *include_bytes!("../../private/index-key.bin");
+    let index_key: [u8; 4] = *include_bytes!("../../private/index-key.bin");
     let index_key = u32::from_ne_bytes(index_key);
-     
-    // Create our block and cipher
-    let mut block = CipherBlock::new(block_bytes);
     let cipher = MainCipher::new(&KEY, index_key);
      
-    cipher.cipher_block(index, &mut block);
-
+    let mut block = IndexedBlock::new();
+     
     // Setup some configuration values
     let config = nrf24_rs::config::NrfConfig::default()
         .channel(8)
@@ -126,12 +118,31 @@ fn main() -> ! {
     let mut index = 0;
     // Message should now successfully have been sent!
     loop {
-        led.toggle();
+
+        let bytes = block.as_bytes_mut();
+
+        //Write message
+        // let base_msg = b"This is a test message      ";
+        // for (i, b) in base_msg.iter().enumerate() {
+        //     bytes[i] = *b;
+        // }
+        //Write index
+        for i in 0..7 {
+            block.data_mut()[i] = i as u32;
+        }
+        block.tag().set_index(index);
+        index += 1;
+
+        block.do_cipher(&cipher);
+        let message = block.as_bytes();
+        assert_eq!(message.len() as u8, nrf24_rs::MAX_PAYLOAD_SIZE);
+
         // Keep trying to send the message
-        while let Err(_) = nrf_chip.write(&mut delay, message) {
+        while nrf_chip.write(&mut delay, message).is_err() {
             // Something went wrong while writing, try again in 50ms
             delay.delay_ms(50u16);
         }
+        led.toggle();
         delay.delay_ms(200u16);
         led.toggle();
         delay.delay_ms(800u16);
