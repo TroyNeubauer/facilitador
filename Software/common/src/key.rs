@@ -8,12 +8,12 @@ use std::{collections::HashMap, sync::Mutex};
 ///
 /// # Safety
 /// 1. All bit patterns of implementing types must be valid
-/// 2. Implementing types must require alignment less than or equal to 8 bytes
+/// 2. Implementing types must require alignment less than or equal to 4 bytes
 pub unsafe trait Word: Copy + From<u8> {}
 
 /// Represents an `N` element key of type `T`.
 /// Used so that larger element sizes such as u32 or u64 can be used, increasing effiency over u8
-#[repr(align(8))]
+#[repr(align(4))]
 pub struct Key<const N: usize>([u8; N]);
 
 /// The symmetric key used for both encryption and decryption
@@ -61,9 +61,8 @@ impl<const N: usize> Key<N> {
         let offset = word_offset % max_index;
 
         // SAFETY:
-        // T is only imelemented for types with an alignment of 8 bytes or less,
-        // becasue Self is aligned to 8 byte bounderies via #[reper(align(8))], the resulting
-        // pointer is aligned
+        // T is only imelemented for types with an alignment of 4 bytes or less, and becasue Self
+        // is aligned to 4 byte bounderies via #[reper(align(4))], the resulting pointer is aligned
         let ptr: *const T = self.0.as_ptr() as *const T;
 
         #[cfg(feature = "std")]
@@ -147,5 +146,3 @@ unsafe impl Word for u8 {}
 unsafe impl Word for u16 {}
 /// SAFETY: u32 has no invalid bit patterns
 unsafe impl Word for u32 {}
-/// SAFETY: u64 has no invalid bit patterns
-unsafe impl Word for u64 {}

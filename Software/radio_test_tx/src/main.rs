@@ -83,9 +83,27 @@ fn main() -> ! {
     );
 
     let mut delay = hal::delay::Delay::new(core.SYST, clocks);
+    let a = common::KEY;
 
     let message = b"Hello world! I need to fill all the bytes please!"; // The message we will be sending
     let message = &message[..nrf24_rs::MAX_PAYLOAD_SIZE as usize];
+
+
+    use common::{Key, CipherBlock, MainCipher, KEY};
+
+
+    // Encryption is done in place so this is where the plaintext goes
+    let mut block_bytes = [0u8; 32];
+     
+    // We also need an index key that is used to encrypt the index when sent in the clear
+    let mut index_key: [u8; 4] = *include_bytes!("../../private/index-key.bin");
+    let index_key = u32::from_ne_bytes(index_key);
+     
+    // Create our block and cipher
+    let mut block = CipherBlock::new(block_bytes);
+    let cipher = MainCipher::new(&KEY, index_key);
+     
+    cipher.cipher_block(index, &mut block);
 
     // Setup some configuration values
     let config = nrf24_rs::config::NrfConfig::default()
@@ -105,11 +123,12 @@ fn main() -> ! {
     // in order to receive this message.
     nrf_chip.open_writing_pipe(b"Node1").unwrap();
 
+    let mut index = 0;
     // Message should now successfully have been sent!
     loop {
         led.toggle();
         // Keep trying to send the message
-        while let Err(e) = nrf_chip.write(&mut delay, message) {
+        while let Err(_) = nrf_chip.write(&mut delay, message) {
             // Something went wrong while writing, try again in 50ms
             delay.delay_ms(50u16);
         }
