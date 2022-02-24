@@ -1,4 +1,4 @@
-20104727590239322
+20113778255057593
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -6565,6 +6565,13 @@ Connector Audio Switronic ST-005-G
 0
 4
 3
+Connector_Audio
+Jack_3.5mm_Technik_TWP-3002_Horizontal
+3.5mm Horizontal Waterproof Stereo Headphones Jack, https://www.technik.com.hk/images/pdf_product/WP3002-PA66-A.pdf
+audio jack stereo horizontal waterproof
+0
+7
+4
 Connector_Audio
 Jack_6.35mm_Neutrik_NJ2FD-V_Vertical
 6.35mm (1/4 in) Vertical Jack, Non-switching mono jack (T/S), https://www.neutrik.com/en/product/nj2fd-v
@@ -52059,120 +52066,57 @@ Ferrite vertical LairdTech 28C0236-0JW-10
 2
 2
 Fiducial
-Fiducial_1mm_Dia_2.54mm_Outer_CopperBottom
-Circular Fiducial, 1mm bare copper bottom, 2.54mm keepout
+Fiducial_0.5mm_Mask1.5mm
+Circular Fiducial, 0.5mm bare copper, 1.5mm soldermask opening
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_1mm_Dia_2.54mm_Outer_CopperTop
-Circular Fiducial, 1mm bare copper top, 2.54mm keepout
+Fiducial_0.5mm_Mask1mm
+Circular Fiducial, 0.5mm bare copper, 1mm soldermask opening (Level C)
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_Modern_CopperBottom
-Fiducial, Modern, Copper Bottom
+Fiducial_0.75mm_Mask1.5mm
+Circular Fiducial, 0.75mm bare copper, 1.5mm soldermask opening (Level B)
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_Modern_CopperTop
-Fiducial, Modern, Copper Top
+Fiducial_0.75mm_Mask2.25mm
+Circular Fiducial, 0.75mm bare copper, 2.25mm soldermask opening
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_Modern_SilkscreenTop
-Fiducial, Modern, Silkscreen Top
+Fiducial_1.5mm_Mask3mm
+Circular Fiducial, 1.5mm bare copper, 3mm soldermask opening
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_classic_Small_CopperBottom_Type1
-Fiducial, Classic, Small, Copper Bottom, Type 1
+Fiducial_1.5mm_Mask4.5mm
+Circular Fiducial, 1.5mm bare copper, 4.5mm soldermask opening
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_classic_Small_CopperBottom_Type2
-Fiducial, Classic, Small, Copper Bottom, Type 2
+Fiducial_1mm_Mask2mm
+Circular Fiducial, 1mm bare copper, 2mm soldermask opening (Level A)
 fiducial
 0
 1
 0
 Fiducial
-Fiducial_classic_Small_CopperTop_Type1
-Fiducial, Classic, Small, Copper Top, Type 1
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_Small_CopperTop_Type2
-Fiducial, Classic, Small, Copper Top, Type 2
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_Small_SilkscreenTop_Type1
-Fiducial, Classic, Small, Copper Top, Type 1
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_Small_SilkscreenTop_Type2
-Fiducial, Classic, Small, Silkscreen Top, Type 2
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_CopperBottom_Type1
-Fiducial, Classic, Big, Copper Bottom, Type 1
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_CopperBottom_Type2
-Fiducial, Classic, Big, Copper Bottom, Type 2
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_CopperTop_Type1
-Fiducial, Classic, Big, Copper Top, Type 1
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_CopperTop_Type2
-Fiducial, Classic, Big, Copper Top, Type 2
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_SilkscreenTop_Type1
-Fiducial, Classic, Big, Silkscreen Top, Type 1
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_classic_big_SilkscreenTop_Type2
-Fiducial, Classic, Big, Silkscreen Top, Type 2
+Fiducial_1mm_Mask3mm
+Circular Fiducial, 1mm bare copper, 3mm soldermask opening (recommended)
 fiducial
 0
 1
@@ -53018,19 +52962,26 @@ Heatsink AAVID TO-263 D2 Pak
 2
 1
 Heatsink
-Heatsink_Aavid-TV5G_TO220_Horizontal
-Heatsink TV5G TO-220 Horizontal, https://www.shopaavid.com/Product/TV-5G
-Heatsink TV5G TO-220 Horizontal 
+Heatsink_AAVID_576802B03900G
+Heatsink, 14.48x12.7x19.05mm, TO-220/ TO-262, https://www.boydcorp.com/aavid-datasheets/Board-Level-Cooling-Plug-In-5768.pdf
+heatsink
 0
-0
-0
+1
+1
 Heatsink
-Heatsink_Aavid_590302B03600G
+Heatsink_AAVID_590302B03600G
 Heatsink, 25.4x25.4x42.54mm, TO-220, https://www.boydcorp.com/aavid-datasheets/Board-Level-Cooling-Channel-5903.pdf
 heatsink
 0
 2
 2
+Heatsink
+Heatsink_AAVID_TV5G_TO220_Horizontal
+Heatsink TV5G TO-220 Horizontal, https://www.shopaavid.com/Product/TV-5G
+Heatsink TV5G TO-220 Horizontal 
+0
+0
+0
 Heatsink
 Heatsink_Fischer_FK224xx2201_25x8.3mm
 25x8.3mm Heatsink, 18K/W, TO-220, https://www.fischerelektronik.de/web_fischer/en_GB/$catalogue/fischerData/PR/FK224_220_1_/datasheet.xhtml?branch=heatsinks
@@ -56952,6 +56903,13 @@ LED RGB PLCC-6 CLP6C-FBK
 6
 6
 LED_SMD
+LED_RGB_Everlight_EASV3015RGBA0_Horizontal
+LED, RGB, right-angle, clear, https://everlightamericas.com/index.php?controller=attachment&id_attachment=3220
+LED RGB right-angle
+0
+4
+4
+LED_SMD
 LED_RGB_Getian_GT-P6PRGB4303
 https://www.gme.sk/img/cache/doc/518/177/vykonova-led-getian-gt-p6prgb4303-datasheet-1.pdf
 LED RGB 
@@ -57616,6 +57574,13 @@ Yellow 5381 Series LED
 0
 2
 2
+Lib
+SAMTEC_ZF5S-24-01-T-WT
+
+
+0
+26
+26
 Module
 A20_OLINUXINO_LIME2
 A20 Olinuxino LIME2, 1.2GHz, 512-1024MB RAM, Micro-SD, NAND or eMMC, 1000Mbit Ethernet
@@ -61173,6 +61138,13 @@ SMD SMT crystal oscillator hand-soldering
 4
 4
 Oscillator
+Oscillator_SMD_SiTime_SiT9121-6Pin_3.2x2.5mm
+3.2x2.5mm, 1-220MHz High Performance Differential Oscillator SiTime SiT9121 https://www.sitime.com/datasheet/SiT9121
+SMD SMT crystal oscillator
+0
+6
+6
+Oscillator
 Oscillator_SMD_Silicon_Labs_LGA-6_2.5x3.2mm_P1.25mm
 Silicon_Labs  LGA, 6 Pin (https://www.silabs.com/documents/public/data-sheets/si512-13.pdf), generated with kicad-footprint-generator ipc_noLead_generator.py
 Silicon_Labs LGA NoLead
@@ -62893,6 +62865,13 @@ UFD Package, 4-Lead Plastic QFN (2mm x 2mm), http://ams.com/eng/content/download
 QFN 0.95
 0
 6
+5
+Package_DFN_QFN
+AO_DFN-8-1EP_5.55x5.2mm_P1.27mm_EP4.12x4.6mm
+DD Package; 8-Lead Plastic DFN (5.55mm x 5.2mm), Pin 5-8 connected to EP (http://www.aosmd.com/res/packaging_information/DFN5x6_8L_EP1_P.pdf)
+dfn 
+0
+25
 5
 Package_DFN_QFN
 Cypress_QFN-56-1EP_8x8mm_P0.5mm_EP6.22x6.22mm_ThermalVias
@@ -75853,7 +75832,7 @@ http://www.susumu-usa.com/pdf/Foot_Print_38.pdf, https://www.susumu.co.jp/common
 3
 RF_GPS
 Linx_RXM-GPS
-GPS Module, Linx
+GPS Module, Linx (https://linxtechnologies.com/wp/wp-content/uploads/rxm-gps-rm.pdf)
 gps linx
 0
 22
@@ -76216,7 +76195,7 @@ Bluetooth Module
 30
 30
 RF_Module
-BM78SPPS5XC2
+BM78SPPS5xC2
 Bluetooth Dual-mode module with integral chip antenna (http://ww1.microchip.com/downloads/en/DeviceDoc/60001380C.pdf)
 Bluetooth BR/EDR BLE
 0
@@ -76416,7 +76395,7 @@ RFDigital_RFD77101
 RFDigital RFD77101 Simblee
 RFDigital RFD77101 Simblee
 0
-48
+45
 45
 RF_Module
 RN42

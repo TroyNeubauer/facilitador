@@ -6611,7 +6611,7 @@
     (property "Value" "Camer Interface" (id 1) (at 287.02 100.33 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Connector_PinHeader_1.00mm:PinHeader_1x24_P1.00mm_Vertical_SMD_Pin1Left" (id 2) (at 295.91 130.81 0)
+    (property "Footprint" "Lib:SAMTEC_ZF5S-24-01-T-WT" (id 2) (at 295.91 130.81 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 295.91 130.81 0)
@@ -8308,7 +8308,7 @@
       (reference "J5") (unit 1) (value "Header Pins") (footprint "Connector_PinHeader_1.27mm:PinHeader_2x11_P1.27mm_Vertical_SMD")
     )
     (path "/701033a6-4188-46b9-b56d-63cc408b62d6"
-      (reference "J6") (unit 1) (value "Camer Interface") (footprint "Connector_PinHeader_1.00mm:PinHeader_1x24_P1.00mm_Vertical_SMD_Pin1Left")
+      (reference "J6") (unit 1) (value "Camer Interface") (footprint "Lib:SAMTEC_ZF5S-24-01-T-WT")
     )
     (path "/788a04c2-6e94-4f16-bd0e-64642763e556"
       (reference "L1") (unit 1) (value "10u") (footprint "Inductor_SMD:L_6.3x6.3_H3")
