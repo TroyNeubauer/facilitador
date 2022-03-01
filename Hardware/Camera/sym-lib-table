@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "CMEJ-0627-42-P")(type "Legacy")(uri "C:/Hardware/facilitador/Hardware/Lib.pretty/CMEJ-0627-42-P.lib")(options "")(descr ""))
+  (lib (name "ZF5S-24-01-T-WT")(type "Legacy")(uri "C:/Hardware/facilitador/Hardware/Lib.pretty/ZF5S-24-01-T-WT.lib")(options "")(descr ""))
+)
